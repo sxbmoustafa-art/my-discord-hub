@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlTag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORVEX - Control Panel & Bot Hosting</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-card: #151a23;
+            --bg-sidebar: #0f131a;
+            --accent-blue: #5865f2;
+            --accent-green: #23a55a;
+            --accent-red: #f23f43;
+            --text-main: #f2f3f5;
+            --text-muted: #949ba4;
+            --border-color: #1f2633;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .nav-item.active a, .nav-item a:hover {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .lang-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Profile Banner Card (Discord Style) */
+        .profile-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .profile-banner {
+            height: 120px;
+            background: linear-gradient(135deg, #1e1f29, #5865f2);
+            position: relative;
+        }
+
+        .profile-body {
+            padding: 20px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .profile-avatar-wrap {
+            position: absolute;
+            top: -50px;
+            right: 20px;
+        }
+
+        [dir="ltr"] .profile-avatar-wrap {
+            right: auto;
+            left: 20px;
+        }
+
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 5px solid var(--bg-card);
+            background-color: #2b2d31;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--text-main);
+        }
+
+        .profile-details {
+            margin-top: 40px;
+        }
+
+        .username {
+            font-size: 1.4rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-admin {
+            background-color: rgba(88, 101, 242, 0.2);
+            color: #5865f2;
+            border: 1px solid #5865f2;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .user-id {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Live Terminal Logs */
+        .terminal {
+            background-color: #05070a;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #4af626;
+            height: 180px;
+            overflow-y: auto;
+        }
+
+        .log-line {
+            margin-bottom: 5px;
+        }
+
+        .log-line.error { color: var(--accent-red); }
+        .log-line.info { color: #5865f2; }
+
+        /* Bot Control List */
+        .bot-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bot-item:last-child { border-bottom: none; }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .btn-danger { background-color: var(--accent-red); color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-robot"></i> ORVEX HOST
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item active"><a href="#"><i class="fa-solid fa-chart-line"></i> <span data-i18n="dashboard">لوحة التحكم</span></a></li>
+            <li class="nav-item"><a href="#"><i class="fa-solid fa-server"></i> <span data-i18n="my_bots">بوتاتي</span></a></li>
+            <li class="nav-item"><a href="#"><i class="fa-solid fa-code"></i> <span data-i18n="ai_builder">منشئ AI</span></a></li>
+            <li class="nav-item"><a href="#"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="super_admin">Super Admin</span></a></li>
+            <li class="nav-item"><a href="#"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="header">
+            <h2 data-i18n="welcome_title">مرحباً بك في نظام الإدارة</h2>
+            <button class="lang-btn" onclick="toggleLanguage()">
+                <i class="fa-solid fa-globe"></i> <span id="langText">English</span>
+            </button>
+        </header>
+
+        <!-- Profile Section -->
+        <div class="profile-card">
+            <div class="profile-banner"></div>
+            <div class="profile-body">
+                <div class="profile-avatar-wrap">
+                    <div class="profile-avatar">
+                        <i class="fa-solid fa-user-ninja"></i>
+                    </div>
+                </div>
+                <div class="profile-details">
+                    <div class="username">
+                        Orvex <span class="badge-admin">SUPER ADMIN</span>
+                    </div>
+                    <div class="user-id">Discord ID: 1182602010651017298</div>
+                </div>
+                <div>
+                    <button class="btn btn-primary" data-i18n="edit_profile">تعديل البروفايل</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Main Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Console & Controls -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-terminal"></i> <span data-i18n="live_console">سجل الأحداث الحي (Live Console)</span></div>
+                    <div class="terminal">
+                        <div class="log-line info">[10:00:02] System initialized successfully.</div>
+                        <div class="log-line">[10:00:05] Super Admin privileges verified for ID: 1182602010651017298</div>
+                        <div class="log-line">[10:01:12] Bot Container #142 (Ticket Bot) - Online.</div>
+                        <div class="log-line info">[10:02:40] Health Check: 24/7 Endpoint Active.</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-sliders"></i> <span data-i18n="global_bot_control">التحكم الشامل بالبوتات (Super Admin)</span></div>
+                    <div class="bot-item">
+                        <div>
+                            <strong>Welcome & Tickets Bot</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Owner ID: 1182602010651017298</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" data-i18n="edit_code">تعديل الكود</button>
+                            <button class="btn btn-danger" data-i18n="stop">إيقاف</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Quick Stats -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-circle-info"></i> <span data-i18n="system_status">حالة النظام</span></div>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;" data-i18n="uptime">التشغيل المستمر: 24/7</p>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;" data-i18n="active_bots">البوتات النشطة: 3</p>
+                    <p style="font-size: 0.9rem;" data-i18n="banned_users">المستخدمين المحظورين: 0</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentLang = 'ar';
+        const translations = {
+            ar: {
+                dashboard: "لوحة التحكم", my_bots: "بوتاتي", ai_builder: "منشئ AI",
+                super_admin: "Super Admin", settings: "الإعدادات", welcome_title: "مرحباً بك في نظام الإدارة",
+                edit_profile: "تعديل البروفايل", live_console: "سجل الأحداث الحي (Live Console)",
+                global_bot_control: "التحكم الشامل بالبوتات (Super Admin)", edit_code: "تعديل الكود",
+                stop: "إيقاف", system_status: "حالة النظام", uptime: "التشغيل المستمر: 24/7",
+                active_bots: "البوتات النشطة: 3", banned_users: "المستخدمين المحظورين: 0"
+            },
+            en: {
+                dashboard: "Dashboard", my_bots: "My Bots", ai_builder: "AI Builder",
+                super_admin: "Super Admin", settings: "Settings", welcome_title: "Welcome to Management System",
+                edit_profile: "Edit Profile", live_console: "Live Console",
+                global_bot_control: "Global Bot Control (Super Admin)", edit_code: "Edit Code",
+                stop: "Stop", system_status: "System Status", uptime: "Uptime: 24/7",
+                active_bots: "Active Bots: 3", banned_users: "Banned Users: 0"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            document.getElementById('htmlTag').dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('htmlTag').lang = currentLang;
+            document.getElementById('langText').innerText = currentLang === 'ar' ? 'English' : 'العربية';
+
+            document.querySelectorAll('[data-i18n]').forEach(elem => {
+                const key = elem.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    elem.innerText = translations[currentLang][key];
+                }
+            });
+        }
+    </script>
+</body>
+</html>
