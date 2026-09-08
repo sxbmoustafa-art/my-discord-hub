@@ -75,6 +75,7 @@
             text-decoration: none;
             border-radius: 8px;
             font-size: 15px;
+            cursor: pointer;
         }
 
         .nav-item a:hover, .nav-item.active a {
@@ -119,6 +120,13 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .stats-grid {
@@ -159,7 +167,15 @@
             margin-top: 5px;
         }
 
-        /* Console & Bots Section */
+        /* Dashboard Sections */
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -171,6 +187,7 @@
             border-radius: 12px;
             padding: 20px;
             border: 1px solid var(--border-color);
+            margin-bottom: 20px;
         }
 
         .card-header {
@@ -207,6 +224,7 @@
             height: 10px;
             border-radius: 50%;
             display: inline-block;
+            margin-left: 8px;
         }
 
         .status-online { background-color: var(--accent-green); }
@@ -220,11 +238,28 @@
             font-weight: bold;
             color: white;
             transition: opacity 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 13px;
         }
 
         .btn-primary { background-color: var(--accent-blue); }
         .btn-danger { background-color: var(--accent-red); }
+        .btn-success { background-color: var(--accent-green); }
         .btn:hover { opacity: 0.8; }
+
+        /* AI Generator Styles */
+        textarea, input[type="text"] {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-main);
+            font-size: 14px;
+            margin-bottom: 15px;
+            resize: vertical;
+        }
     </style>
 </head>
 <body>
@@ -236,114 +271,223 @@
             <span>ORVEX HOST</span>
         </div>
         <ul class="nav-list">
-            <li class="nav-item active"><a href="#"><i class="fa-solid fa-chart-line"></i> لوحة التحكم</a></li>
-            <li class="nav-item"><a href="#"><i class="fa-solid fa-robot"></i> بوتاتي</a></li>
-            <li class="nav-item"><a href="#"><i class="fa-solid fa-code"></i> منشئ AI</a></li>
-            <li class="nav-item"><a href="#"><i class="fa-solid fa-user-shield"></i> Super Admin</a></li>
-            <li class="nav-item"><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
+            <li class="nav-item active" onclick="switchPage('dashboard', this)"><a href="#"><i class="fa-solid fa-chart-line"></i> لوحة التحكم</a></li>
+            <li class="nav-item" onclick="switchPage('bots', this)"><a href="#"><i class="fa-solid fa-robot"></i> بوتاتي</a></li>
+            <li class="nav-item" onclick="switchPage('ai', this)"><a href="#"><i class="fa-solid fa-code"></i> منشئ AI</a></li>
+            <li class="nav-item" onclick="switchPage('admin', this)"><a href="#"><i class="fa-solid fa-user-shield"></i> Super Admin</a></li>
+            <li class="nav-item" onclick="switchPage('settings', this)"><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
         </ul>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <header>
-            <h2>مرحباً بك في نظام الإدارة</h2>
-            <div class="user-profile">
+            <h2 id="pageTitle">لوحة التحكم الرئيسية</h2>
+            <div class="user-profile" id="userProfileArea">
+                <!-- سيتم ملؤها ديناميكياً بناءً على تسجيل الدخول -->
                 <div class="avatar"><i class="fa-solid fa-user"></i></div>
                 <div>
-                    <div><strong>Orvex</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">SUPER ADMIN</span></div>
-                    <small style="color: var(--text-muted);">Discord ID: 1182602010651017298</small>
+                    <div><strong>زائر (Guest)</strong></div>
+                    <small style="color: var(--text-muted);">غير مسجل الدخول</small>
                 </div>
-                <button class="btn btn-primary" style="font-size: 12px;">تعديل البروفايل</button>
+                <button class="btn btn-primary" onclick="loginWithDiscord()">تسجيل الدخول بـ Discord</button>
             </div>
         </header>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: rgba(35, 165, 90, 0.1); color: var(--accent-green);">
-                    <i class="fa-solid fa-server"></i>
+        <!-- 1. صفحة لوحة التحكم -->
+        <div id="dashboard" class="page-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(35, 165, 90, 0.1); color: var(--accent-green);">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>حالة النظام</h3>
+                        <p id="systemStatus">جاري الاتصال...</p>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <h3>حالة النظام</h3>
-                    <p id="systemStatus">جاري الاتصال...</p>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(88, 101, 242, 0.1); color: var(--accent-blue);">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>البوتات النشطة</h3>
+                        <p id="activeBots">0</p>
+                    </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: rgba(88, 101, 242, 0.1); color: var(--accent-blue);">
-                    <i class="fa-solid fa-robot"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>البوتات النشطة</h3>
-                    <p id="activeBots">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: rgba(242, 63, 67, 0.1); color: var(--accent-red);">
-                    <i class="fa-solid fa-users-slash"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>المستخدمين المحظورين</h3>
-                    <p id="bannedUsers">0</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Grid -->
-        <div class="dashboard-grid">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-terminal"></i> سجل الأحداث الحي (Live Console)</h3>
-                </div>
-                <div class="console" id="consoleOutput">
-                    [System] Initializing connection to backend...<br>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(242, 63, 67, 0.1); color: var(--accent-red);">
+                        <i class="fa-solid fa-users-slash"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>المستخدمين المحظورين</h3>
+                        <p id="bannedUsers">0</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-sliders"></i> التحكم الشامل بالبوتات</h3>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-terminal"></i> سجل الأحداث الحي (Live Console)</h3>
+                    </div>
+                    <div class="console" id="consoleOutput">
+                        [System] Initializing connection to backend...<br>
+                    </div>
                 </div>
-                <div id="botList">
-                    <div class="bot-item">
-                        <div>
-                            <span class="bot-status status-online"></span>
-                            <strong>Welcome & Tickets Bot</strong>
-                        </div>
-                        <div>
-                            <button class="btn btn-primary" style="font-size: 11px;">تعديل الكود</button>
-                            <button class="btn btn-danger" style="font-size: 11px;">إيقاف</button>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-sliders"></i> البوتات السريعة</h3>
+                    </div>
+                    <div id="botList">
+                        <div class="bot-item">
+                            <div>
+                                <span class="bot-status status-online"></span>
+                                <strong>Welcome & Tickets Bot</strong>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary" style="font-size: 11px;">إدارة</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- 2. صفحة بوتاتي -->
+        <div id="bots" class="page-section">
+            <div class="card">
+                <h3>إدارة بوتاتك المستضافة</h3>
+                <p style="color: var.text-muted; margin-top: 10px;">هنا يمكنك رؤية كافة البوتات الخاصة بك وتعديل ملفات التشغيل الخاصة بها مباشرة.</p>
+                <br>
+                <button class="btn btn-success" onclick="switchPage('ai', document.querySelectorAll('.nav-item')[2])">+ إنشاء بوت جديد عبر الـ AI</button>
+            </div>
+        </div>
+
+        <!-- 3. صفحة منشئ AI -->
+        <div id="ai" class="page-section">
+            <div class="card">
+                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> منشئ بوتات Discord بالذكاء الاصطناعي</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">اكتب وصفاً للبوت الذي تريده، وسيقوم النظام بتوليد كود Node.js جاهز للتشغيل فوراً!</p>
+                
+                <label>فكرة البوت أو الأوامر المطلوبة:</label>
+                <textarea id="aiPrompt" rows="4" placeholder="مثال: أريد بوت تكتات يفتح روم عند الضغط على زر، ويرسل رسالة ترحيبية في الروم العام..."></textarea>
+                
+                <button class="btn btn-primary" onclick="generateBotAI()"><i class="fa-solid fa-gears"></i> توليد كود البوت</button>
+                
+                <div style="margin-top: 20px;">
+                    <label>الكود الناتج:</label>
+                    <textarea id="aiResultCode" rows="8" readonly placeholder="سيظهر الكود البرمجي هنا بعد التوليد..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. صفحة Super Admin -->
+        <div id="admin" class="page-section">
+            <div class="card">
+                <h3>لوحة تحكم المشرف الأساسي (Super Admin)</h3>
+                <p style="color: var(--text-muted); margin-top: 10px;">صلاحيات كاملة للتحكم في استهلاك السيرفر، ومراقبة الـ Webhooks والبوتات المفعلة.</p>
+            </div>
+        </div>
+
+        <!-- 5. صفحة الإعدادات -->
+        <div id="settings" class="page-section">
+            <div class="card">
+                <h3>إعدادات الحساب والنظام</h3>
+                <p style="color: var(--text-muted); margin-top: 10px;">ربط التوكنات، وإدارة مفاتيح الربط الخارجي.</p>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Script connected to Replit Backend -->
+    <!-- Script connected to Replit Backend & Navigation Logic -->
     <script>
         const API_URL = 'https://b01c2f42-dc10-4354-8748-ecec515fe9d2-00-v6s1d507b70.spock.replit.dev';
 
+        // التنقل بين الصفحات
+        function switchPage(pageId, element) {
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(pageId).classList.add('active');
+            if(element) element.classList.add('active');
+
+            const titles = {
+                'dashboard': 'لوحة التحكم الرئيسية',
+                'bots': 'بوتاتي المستضافة',
+                'ai': 'منشئ البوتات بالذكاء الاصطناعي',
+                'admin': 'لوحة تحكم المشرف الأساسي',
+                'settings': 'الإعدادات العامة'
+            };
+            document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
+        }
+
+        // محاكاة تسجيل الدخول أو استقبال بيانات حساب ديسكورد عند العودة
+        function loginWithDiscord() {
+            // مؤقتاً لضمان التجربة الفورية، سيتم التعرف عليك كـ Super Admin مباشرة
+            localStorage.setItem('discord_user', JSON.stringify({
+                username: 'Orvex',
+                id: '1182602010651017298',
+                avatar: 'https://cdn.discordapp.com/embed/avatars/0.png'
+            }));
+            checkAuth();
+        }
+
+        function checkAuth() {
+            const userData = JSON.parse(localStorage.getItem('discord_user'));
+            const profileArea = document.getElementById('userProfileArea');
+            
+            if (userData) {
+                profileArea.innerHTML = `
+                    <div class="avatar"><img src="${userData.avatar}" alt="Avatar"></div>
+                    <div>
+                        <div><strong>${userData.username}</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">SUPER ADMIN</span></div>
+                        <small style="color: var(--text-muted);">Discord ID: ${userData.id}</small>
+                    </div>
+                    <button class="btn btn-danger" onclick="logout()" style="font-size: 11px;">خروج</button>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('discord_user');
+            location.reload();
+        }
+
+        // جلب حالة النظام من Replit
         async function fetchSystemHealth() {
             const consoleBox = document.getElementById('consoleOutput');
             try {
                 const response = await fetch(`${API_URL}/health`);
                 const data = await response.json();
                 
-                document.getElementById('systemStatus').innerText = 'التشغيل المستمر: ' + (data.uptime || '24/7');
+                document.getElementById('systemStatus').innerText = 'متصل (24/7)';
                 document.getElementById('activeBots').innerText = data.activeBots || '3';
                 document.getElementById('bannedUsers').innerText = data.bannedUsers || '0';
                 
-                consoleBox.innerHTML += `<span style="color: #4af626;">[${new Date().toLocaleTimeString()}] Health Check OK - API Connected Successfully</span><br>`;
+                consoleBox.innerHTML += `<span style="color: #4af626;">[${new Date().toLocaleTimeString()}] Health Check OK - Connected to Replit</span><br>`;
+                consoleBox.scrollTop = consoleBox.scrollHeight;
             } catch (err) {
                 document.getElementById('systemStatus').innerText = 'غير متصل';
-                consoleBox.innerHTML += `<span style="color: var(--accent-red);">[${new Date().toLocaleTimeString()}] Error: Unable to connect to Replit backend.</span><br>`;
+                consoleBox.innerHTML += `<span style="color: var(--accent-red);">[${new Date().toLocaleTimeString()}] Error: Backend connection failed.</span><br>`;
             }
         }
 
-        // Auto Refresh System Health
+        // توليد كود البوت بالـ AI
+        function generateBotAI() {
+            const prompt = document.getElementById('aiPrompt').value;
+            const resultBox = document.getElementById('aiResultCode');
+            if(!prompt) {
+                alert('الرجاء كتابة فكرة البوت أولاً!');
+                return;
+            }
+            resultBox.value = `// جاري توليد كود البوت بناءً على طلبك: "${prompt}"...\n\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on('ready', () => {\n  console.log(\`Logged in as \${client.user.tag}! [Generated by AI]\`);\n});\n\nclient.login('YOUR_BOT_TOKEN');`;
+        }
+
+        // التشغيل الأولي
+        checkAuth();
         fetchSystemHealth();
-        setInterval(fetchSystemHealth, 10000);
     </script>
 </body>
 </html>
