@@ -248,7 +248,6 @@
         .btn-success { background-color: var(--accent-green); }
         .btn:hover { opacity: 0.8; }
 
-        /* AI Generator Styles */
         textarea, input[type="text"] {
             width: 100%;
             background: var(--bg-main);
@@ -400,9 +399,11 @@
 
     </div>
 
-    <!-- Script connected to Replit Backend & Navigation Logic -->
+    <!-- Scripting & Auth Logic -->
     <script>
         const API_URL = 'https://b01c2f42-dc10-4354-8748-ecec515fe9d2-00-v6s1d507b70.spock.replit.dev';
+        // ضع هنا رابط التطبيق الخاص بك على ديسكورد للتحويل (Discord OAuth2 Redirect)
+        const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID'; 
 
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
@@ -421,32 +422,69 @@
             document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
         }
 
+        // الحقيقي: تحويل المستخدم إلى صفحة Discord OAuth2 الرسمية
         function loginWithDiscord() {
-            localStorage.setItem('discord_user', JSON.stringify({
-                username: 'Orvex',
-                id: '1182602010651017298',
-                avatar: 'https://cdn.discordapp.com/embed/avatars/0.png'
-            }));
-            checkAuth();
+            // إذا كنت لم تربط التطبيق بعد، يمكنك وضع الرابط المباشر لتسجيل الدخول أو ربطه بالـ Backend
+            const redirectUri = window.location.origin + window.location.pathname;
+            // استخدام رابط تسجيل الدخول المباشر عبر السيرفر أو ديسكورد
+            window.location.href = `${API_URL}/auth/discord`;
         }
 
+        // التحقق من بيانات المستخدم القادمة من الـ URL أو الـ LocalStorage
         function checkAuth() {
-            const userData = JSON.parse(localStorage.getItem('discord_user'));
-            const profileArea = document.getElementById('userProfileArea');
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
             
-            if (userData) {
-                profileArea.innerHTML = `
-                    <div class="avatar"><img src="${userData.avatar}" alt="Avatar"></div>
-                    <div>
-                        <div><strong>${userData.username}</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">SUPER ADMIN</span></div>
-                        <small style="color: var(--text-muted);">Discord ID: ${userData.id}</small>
-                    </div>
-                    <button class="btn btn-danger" onclick="logout()" style="font-size: 11px;">خروج</button>
-                `;
+            if (token) {
+                // حفظ التوكن في الـ LocalStorage
+                localStorage.setItem('discord_token', token);
+                // جلب بيانات المستخدم من البੈك اند
+                fetchUserData(token);
+                // تنظيف الـ URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                const savedToken = localStorage.getItem('discord_token');
+                if (savedToken) {
+                    fetchUserData(savedToken);
+                }
             }
         }
 
+        async function fetchUserData(token) {
+            try {
+                const response = await fetch(`${API_URL}/auth/user`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    localStorage.setItem('discord_user', JSON.stringify(userData));
+                    renderUserProfile(userData);
+                } else {
+                    logout();
+                }
+            } catch (err) {
+                // في حال فشل الاتصال بالسيرفر، نجرب قراءة المخزن محلياً مؤقتاً للتجربة
+                const localUser = JSON.parse(localStorage.getItem('discord_user'));
+                if (localUser) renderUserProfile(localUser);
+            }
+        }
+
+        function renderUserProfile(userData) {
+            const profileArea = document.getElementById('userProfileArea');
+            const avatarUrl = userData.avatar ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
+            
+            profileArea.innerHTML = `
+                <div class="avatar"><img src="${avatarUrl}" alt="Avatar"></div>
+                <div>
+                    <div><strong>${userData.username}</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">ADMIN</span></div>
+                    <small style="color: var(--text-muted);">ID: ${userData.id}</small>
+                </div>
+                <button class="btn btn-danger" onclick="logout()" style="font-size: 11px;">خروج</button>
+            `;
+        }
+
         function logout() {
+            localStorage.removeItem('discord_token');
             localStorage.removeItem('discord_user');
             location.reload();
         }
