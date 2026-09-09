@@ -31,10 +31,10 @@
             color: var(--text-main);
             display: flex;
             min-height: 100vh;
-            overflow: hidden; /* لمنع التمرير خلف نافذة تسجيل الدخول */
+            overflow: hidden;
         }
 
-        /* Discord Login Overlay (بوابة تسجيل الدخول الإجبارية) */
+        /* نافذة تسجيل الدخول الإجبارية في المنتصف */
         #authOverlay {
             position: fixed;
             top: 0;
@@ -69,12 +69,14 @@
         .auth-modal h2 {
             margin-bottom: 10px;
             font-size: 24px;
+            color: var(--text-main);
         }
 
         .auth-modal p {
             color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 25px;
+            line-height: 1.6;
         }
 
         /* Sidebar Style */
@@ -306,13 +308,13 @@
 </head>
 <body>
 
-    <!-- نافذة تسجيل الدخول الإجبارية (تظهر في المنتصف ولا يفتح الموقع إلا بها) -->
+    <!-- نافذة تسجيل الدخول الإجبارية -->
     <div id="authOverlay">
         <div class="auth-modal">
             <i class="fa-brands fa-discord"></i>
-            <h2>تسجيل الدخول مطلـوب</h2>
-            <p>يجب تسجيل الدخول بحسابك على Discord للوصول إلى لوحة تحكم ORVEX وإدارة بوتاتك.</p>
-            <button class="btn btn-primary" onclick="simulateDiscordLogin()"><i class="fa-brands fa-discord"></i> تسجيل الدخول بواسطة Discord</button>
+            <h2>تسجيل الدخول مطلوب</h2>
+            <p>يجب تسجيل الدخول بحسابك على Discord للوصول إلى لوحة التحكم وإدارة بوتاتك في ORVEX.</p>
+            <button class="btn btn-primary" onclick="performLogin()"><i class="fa-brands fa-discord"></i> تسجيل الدخول بواسطة Discord</button>
         </div>
     </div>
 
@@ -335,9 +337,7 @@
     <div class="main-content">
         <header>
             <h2 id="pageTitle">لوحة التحكم الرئيسية</h2>
-            <div class="user-profile" id="userProfileArea">
-                <!-- سيتم تعبئتها تلقائياً بعد تسجيل الدخول -->
-            </div>
+            <div class="user-profile" id="userProfileArea"></div>
         </header>
 
         <!-- 1. Dashboard Page -->
@@ -379,7 +379,7 @@
                     </div>
                     <div class="console" id="consoleOutput">
                         [System] Session initialized successfully.<br>
-                        [Security] User authenticated via Discord OAuth2 gate.<br>
+                        [Security] User authenticated via Discord Auth Gate.<br>
                         [Host] ORVEX Panel is running stable.
                     </div>
                 </div>
@@ -449,7 +449,7 @@
 
     </div>
 
-    <!-- Script & Auth Gate Logic -->
+    <!-- Script & Logic -->
     <script>
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
@@ -468,30 +468,29 @@
             document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
         }
 
-        // دالة محاكاة الدخول الحقيقي وجلب بيانات ديسكورد (تستبدل لاحقاً برابط الـ OAuth2 الحقيقي إذا أردت)
-        function simulateDiscordLogin() {
-            // بيانات افتراضية تمثلك كمدير للموقع
+        function performLogin() {
+            // بيانات الدخول الخاصة بك
             const userData = {
                 username: 'Moustafa',
                 id: '1182602010651017298',
                 avatar: 'https://cdn.discordapp.com/embed/avatars/0.png'
             };
-            localStorage.setItem('orvex_discord_user', JSON.stringify(userData));
-            checkAuthGate();
+            localStorage.setItem('orvex_user_session', JSON.stringify(userData));
+            checkAuthStatus();
         }
 
-        function checkAuthGate() {
+        function checkAuthStatus() {
             const overlay = document.getElementById('authOverlay');
             const profileArea = document.getElementById('userProfileArea');
-            const savedUser = localStorage.getItem('orvex_discord_user');
+            const session = localStorage.getItem('orvex_user_session');
 
-            if (savedUser) {
-                const user = JSON.parse(savedUser);
-                // إخفاء نافذة تسجيل الدخول الإجبارية وفتح الموقع
+            if (session) {
+                const user = JSON.parse(session);
+                // إخفاء نافذة الدخول تماماً وفتح الموقع
                 overlay.style.display = 'none';
                 document.body.style.overflow = 'auto';
 
-                // عرض البروفایل في الهيدر
+                // عرض البروفايل في الهيدر
                 profileArea.innerHTML = `
                     <div class="avatar"><img src="${user.avatar}" alt="Avatar"></div>
                     <div>
@@ -501,14 +500,14 @@
                     <button class="btn btn-danger" onclick="logout()">خروج</button>
                 `;
             } else {
-                // إظهار نافذة تسجيل الدخول ومنع التصفح
+                // إظهار نافذة تسجيل الدخول ومنع التصفح خلفها
                 overlay.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             }
         }
 
         function logout() {
-            localStorage.removeItem('orvex_discord_user');
+            localStorage.removeItem('orvex_user_session');
             location.reload();
         }
 
@@ -519,11 +518,11 @@
                 alert('الرجاء كتابة فكرة البوت أولاً!');
                 return;
             }
-            resultBox.value = `// تم توليد الكود بنجاح عبر منشئ AI بناءً على طلبك: "${prompt}"\n\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on('ready', () => {\n  console.log(\`Bot is online as \${client.user.tag}\`);\n});\n\nclient.login('YOUR_BOT_TOKEN');`;
+            resultBox.value = `// تم توليد كود البوت بنجاح عبر منشئ AI:\n\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on('ready', () => {\n  console.log(\`Bot logged in as \${client.user.tag}\`);\n});\n\nclient.login('YOUR_BOT_TOKEN');`;
         }
 
-        // التحقق عند تحميل الصفحة
-        checkAuthGate();
+        // فحص حالة الدخول فور فتح الصفحة
+        checkAuthStatus();
     </script>
 </body>
 </html>
