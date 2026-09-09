@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlTag">
 <head>
@@ -34,7 +35,6 @@
             overflow: hidden;
         }
 
-        /* نافذة تسجيل الدخول الإجبارية في المنتصف */
         #authOverlay {
             position: fixed;
             top: 0;
@@ -79,7 +79,6 @@
             line-height: 1.6;
         }
 
-        /* Sidebar Style */
         .sidebar {
             width: 260px;
             background-color: var(--bg-sidebar);
@@ -133,7 +132,6 @@
             border-right: 4px solid var(--accent-blue);
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             padding: 30px;
@@ -214,7 +212,6 @@
             margin-top: 5px;
         }
 
-        /* Dashboard Sections */
         .page-section {
             display: none;
         }
@@ -289,7 +286,7 @@
             font-size: 14px;
         }
 
-        .btn-primary { background-color: var(--accent-blue); width: 100%; }
+        .btn-primary { background-color: var(--accent-blue); width: 100%; text-align: center; }
         .btn-danger { background-color: var(--accent-red); padding: 6px 12px; font-size: 11px; width: auto; }
         .btn:hover { opacity: 0.8; }
 
@@ -308,17 +305,18 @@
 </head>
 <body>
 
-    <!-- نافذة تسجيل الدخول الإجبارية -->
     <div id="authOverlay">
         <div class="auth-modal">
             <i class="fa-brands fa-discord"></i>
             <h2>تسجيل الدخول مطلوب</h2>
             <p>يجب تسجيل الدخول بحسابك على Discord للوصول إلى لوحة التحكم وإدارة بوتاتك في ORVEX.</p>
-            <button class="btn btn-primary" onclick="performLogin()"><i class="fa-brands fa-discord"></i> تسجيل الدخول بواسطة Discord</button>
+            <!-- زر الدخول المربوط بالـ Client ID الخاص بك -->
+            <a href="https://discord.com/api/oauth2/authorize?client_id=1547264211237867600&redirect_uri=https%3A%2F%2Fsxbmoustafa-art.github.io%2Fmy-discord-hub%2F&response_type=token&scope=identify" class="btn btn-primary">
+                <i class="fa-brands fa-discord"></i> تسجيل الدخول بواسطة Discord
+            </a>
         </div>
     </div>
 
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="brand">
             <i class="fa-brands fa-discord"></i>
@@ -333,14 +331,12 @@
         </ul>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <header>
             <h2 id="pageTitle">لوحة التحكم الرئيسية</h2>
             <div class="user-profile" id="userProfileArea"></div>
         </header>
 
-        <!-- 1. Dashboard Page -->
         <div id="dashboard" class="page-section active">
             <div class="stats-grid">
                 <div class="stat-card">
@@ -379,7 +375,7 @@
                     </div>
                     <div class="console" id="consoleOutput">
                         [System] Session initialized successfully.<br>
-                        [Security] User authenticated via Discord Auth Gate.<br>
+                        [Security] User authenticated via Discord OAuth2 gate.<br>
                         [Host] ORVEX Panel is running stable.
                     </div>
                 </div>
@@ -403,7 +399,6 @@
             </div>
         </div>
 
-        <!-- 2. Bots Page -->
         <div id="bots" class="page-section">
             <div class="card">
                 <h3>إدارة بوتاتك المستضافة</h3>
@@ -413,7 +408,6 @@
             </div>
         </div>
 
-        <!-- 3. AI Generator Page -->
         <div id="ai" class="page-section">
             <div class="card">
                 <h3><i class="fa-solid fa-wand-magic-sparkles"></i> منشئ بوتات Discord بالذكاء الاصطناعي</h3>
@@ -431,7 +425,6 @@
             </div>
         </div>
 
-        <!-- 4. Super Admin Page -->
         <div id="admin" class="page-section">
             <div class="card">
                 <h3>لوحة تحكم المشرف الأساسي (Super Admin)</h3>
@@ -439,7 +432,6 @@
             </div>
         </div>
 
-        <!-- 5. Settings Page -->
         <div id="settings" class="page-section">
             <div class="card">
                 <h3>إعدادات الحساب والنظام</h3>
@@ -449,7 +441,6 @@
 
     </div>
 
-    <!-- Script & Logic -->
     <script>
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
@@ -468,15 +459,32 @@
             document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
         }
 
-        function performLogin() {
-            // بيانات الدخول الخاصة بك
-            const userData = {
-                username: 'Moustafa',
-                id: '1182602010651017298',
-                avatar: 'https://cdn.discordapp.com/embed/avatars/0.png'
-            };
-            localStorage.setItem('orvex_user_session', JSON.stringify(userData));
-            checkAuthStatus();
+        function handleDiscordCallback() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                if (accessToken) {
+                    fetch('https://discord.com/api/users/@me', {
+                        headers: { authorization: `Bearer ${accessToken}` }
+                    })
+                    .then(res => res.json())
+                    .then(user => {
+                        const avatarUrl = user.avatar 
+                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
+                            : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                        
+                        const userData = {
+                            username: user.global_name || user.username,
+                            id: user.id,
+                            avatar: avatarUrl
+                        };
+                        localStorage.setItem('orvex_user_session', JSON.stringify(userData));
+                        window.location.hash = '';
+                        checkAuthStatus();
+                    }).catch(err => console.error(err));
+                }
+            }
         }
 
         function checkAuthStatus() {
@@ -486,21 +494,18 @@
 
             if (session) {
                 const user = JSON.parse(session);
-                // إخفاء نافذة الدخول تماماً وفتح الموقع
                 overlay.style.display = 'none';
                 document.body.style.overflow = 'auto';
 
-                // عرض البروفايل في الهيدر
                 profileArea.innerHTML = `
                     <div class="avatar"><img src="${user.avatar}" alt="Avatar"></div>
                     <div>
-                        <div><strong>${user.username}</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">SUPER ADMIN</span></div>
+                        <div><strong>${user.username}</strong> <span style="font-size: 10px; background: var(--accent-blue); padding: 2px 6px; border-radius: 4px;">ADMIN</span></div>
                         <small style="color: var(--text-muted);">ID: ${user.id}</small>
                     </div>
                     <button class="btn btn-danger" onclick="logout()">خروج</button>
                 `;
             } else {
-                // إظهار نافذة تسجيل الدخول ومنع التصفح خلفها
                 overlay.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             }
@@ -521,7 +526,7 @@
             resultBox.value = `// تم توليد كود البوت بنجاح عبر منشئ AI:\n\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on('ready', () => {\n  console.log(\`Bot logged in as \${client.user.tag}\`);\n});\n\nclient.login('YOUR_BOT_TOKEN');`;
         }
 
-        // فحص حالة الدخول فور فتح الصفحة
+        handleDiscordCallback();
         checkAuthStatus();
     </script>
 </body>
