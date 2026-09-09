@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlTag">
 <head>
@@ -438,10 +439,10 @@
                     <h3>إدارة بوتاتك المستضافة</h3>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" onclick="switchPage('ai', document.querySelectorAll('.nav-item')[2])"><i class="fa-solid fa-wand-magic-sparkles"></i> إنشاء بوت عبر الـ AI</button>
-                        <button class="btn btn-success" onclick="openManualModal()"><i class="fa-solid fa-code"></i> إضافة بوت يدوي (إدخال كود)</button>
+                        <button class="btn btn-success" onclick="openManualModal()"><i class="fa-solid fa-code"></i> إضافة بوت يدوي</button>
                     </div>
                 </div>
-                <p style="color: var(--text-muted); margin-bottom: 20px;">هنا قائمة بجميع بوتاتك المضافة، يمكنك تعديلها أو متابعة حالتها.</p>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">هنا يمكنك رؤية كافة البوتات الخاصة بك وتعديل ملفات التشغيل الخاصة بها مباشرة.</p>
                 
                 <div id="userBotsListContainer">
                     <div class="bot-item">
@@ -510,7 +511,6 @@
             document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
         }
 
-        // تحكم بنافذة الإضافة اليدوية
         function openManualModal() {
             document.getElementById('manualModal').style.display = 'flex';
         }
@@ -542,7 +542,6 @@
             const generatedCode = `// AI Generated Bot for: "${prompt}"\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds] });\nclient.on('ready', () => console.log('AI Bot Ready!'));\nclient.login('TOKEN');`;
             resultBox.value = generatedCode;
 
-            // إنشاء البوت تلقائياً وإضافته للقائمة
             const botName = "AI Bot: " + prompt.substring(0, 15) + "...";
             addBotToList(botName, 'مولد عبر الـ AI');
             alert('تم توليد الكود وإنشاء البوت بالذكاء الاصطناعي وإضافته إلى قائمة بوتاتك بنجاح!');
