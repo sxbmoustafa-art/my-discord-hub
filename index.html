@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="htmlTag">
 <head>
@@ -261,6 +260,7 @@
             background: var(--bg-main);
             border-radius: 8px;
             margin-bottom: 10px;
+            border: 1px solid var(--border-color);
         }
 
         .bot-status {
@@ -286,7 +286,8 @@
             font-size: 14px;
         }
 
-        .btn-primary { background-color: var(--accent-blue); width: 100%; text-align: center; }
+        .btn-primary { background-color: var(--accent-blue); text-align: center; }
+        .btn-success { background-color: var(--accent-green); text-align: center; }
         .btn-danger { background-color: var(--accent-red); padding: 6px 12px; font-size: 11px; width: auto; }
         .btn:hover { opacity: 0.8; }
 
@@ -301,22 +302,62 @@
             margin-bottom: 15px;
             resize: vertical;
         }
+
+        /* نافذة منبثقة لإضافة بوت يدوي */
+        #manualModal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(11, 14, 20, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+        }
     </style>
 </head>
 <body>
 
+    <!-- نافذة تسجيل الدخول -->
     <div id="authOverlay">
         <div class="auth-modal">
             <i class="fa-brands fa-discord"></i>
             <h2>تسجيل الدخول مطلوب</h2>
             <p>يجب تسجيل الدخول بحسابك على Discord للوصول إلى لوحة التحكم وإدارة بوتاتك في ORVEX.</p>
-            <!-- زر الدخول المربوط بالـ Client ID الخاص بك -->
-            <a href="https://discord.com/api/oauth2/authorize?client_id=1547264211237867600&redirect_uri=https%3A%2F%2Fsxbmoustafa-art.github.io%2Fmy-discord-hub%2F&response_type=token&scope=identify" class="btn btn-primary">
+            <a href="https://discord.com/api/oauth2/authorize?client_id=1547264211237867600&redirect_uri=https%3A%2F%2Fsxbmoustafa-art.github.io%2Fmy-discord-hub%2F&response_type=token&scope=identify" class="btn btn-primary" style="width:100%;">
                 <i class="fa-brands fa-discord"></i> تسجيل الدخول بواسطة Discord
             </a>
         </div>
     </div>
 
+    <!-- نافذة إضافة بوت يدوي -->
+    <div id="manualModal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-code"></i> إضافة بوت يدوي (إدخال الكود)</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">أدخل اسم البوت وكود الـ Node.js الخاص به لتشغيله واستضافته مباشرة.</p>
+            
+            <label>اسم البوت:</label>
+            <input type="text" id="manualBotName" placeholder="مثال: Moderation Bot">
+            
+            <label>كود التشغيل (Node.js):</label>
+            <textarea id="manualBotCode" rows="6" placeholder="// ضع كود البوت هنا..."></textarea>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-danger" onclick="closeManualModal()">إلغاء</button>
+                <button class="btn btn-success" onclick="saveManualBot()">حفظ وتشغيل البوت</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
     <div class="sidebar">
         <div class="brand">
             <i class="fa-brands fa-discord"></i>
@@ -325,18 +366,20 @@
         <ul class="nav-list">
             <li class="nav-item active" onclick="switchPage('dashboard', this)"><a href="#"><i class="fa-solid fa-chart-line"></i> لوحة التحكم</a></li>
             <li class="nav-item" onclick="switchPage('bots', this)"><a href="#"><i class="fa-solid fa-robot"></i> بوتاتي</a></li>
-            <li class="nav-item" onclick="switchPage('ai', this)"><a href="#"><i class="fa-solid fa-code"></i> منشئ AI</a></li>
+            <li class="nav-item" onclick="switchPage('ai', this)"><a href="#"><i class="fa-solid fa-wand-magic-sparkles"></i> منشئ AI</a></li>
             <li class="nav-item" onclick="switchPage('admin', this)"><a href="#"><i class="fa-solid fa-user-shield"></i> Super Admin</a></li>
             <li class="nav-item" onclick="switchPage('settings', this)"><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
         </ul>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
         <header>
             <h2 id="pageTitle">لوحة التحكم الرئيسية</h2>
             <div class="user-profile" id="userProfileArea"></div>
         </header>
 
+        <!-- 1. Dashboard -->
         <div id="dashboard" class="page-section active">
             <div class="stats-grid">
                 <div class="stat-card">
@@ -354,16 +397,7 @@
                     </div>
                     <div class="stat-info">
                         <h3>البوتات النشطة</h3>
-                        <p>1</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: rgba(242, 63, 67, 0.1); color: var(--accent-red);">
-                        <i class="fa-solid fa-users-slash"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>المستخدمين المحظورين</h3>
-                        <p>0</p>
+                        <p id="activeBotsCount">1</p>
                     </div>
                 </div>
             </div>
@@ -371,7 +405,7 @@
             <div class="dashboard-grid">
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-terminal"></i> سجل الأحداث الحي (Live Console)</h3>
+                        <h3><i class="fa-solid fa-terminal"></i> سجل الأحداث الحي</h3>
                     </div>
                     <div class="console" id="consoleOutput">
                         [System] Session initialized successfully.<br>
@@ -384,58 +418,75 @@
                     <div class="card-header">
                         <h3><i class="fa-solid fa-sliders"></i> البوتات السريعة</h3>
                     </div>
-                    <div id="botList">
+                    <div id="dashboardBotList">
                         <div class="bot-item">
                             <div>
                                 <span class="bot-status status-online"></span>
                                 <strong>Welcome & Tickets Bot</strong>
                             </div>
-                            <div>
-                                <button class="btn btn-primary" style="font-size: 11px; padding: 6px 12px; width:auto;">إدارة</button>
-                            </div>
+                            <button class="btn btn-primary" style="font-size: 11px; padding: 6px 12px; width:auto;">إدارة</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- 2. Bots Management Page -->
         <div id="bots" class="page-section">
             <div class="card">
-                <h3>إدارة بوتاتك المستضافة</h3>
-                <p style="color: var(--text-muted); margin-top: 10px;">هنا يمكنك رؤية كافة البوتات الخاصة بك وتعديل ملفات التشغيل الخاصة بها مباشرة.</p>
-                <br>
-                <button class="btn btn-primary" style="width: auto;" onclick="switchPage('ai', document.querySelectorAll('.nav-item')[2])">+ إنشاء بوت جديد عبر الـ AI</button>
-            </div>
-        </div>
-
-        <div id="ai" class="page-section">
-            <div class="card">
-                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> منشئ بوتات Discord بالذكاء الاصطناعي</h3>
-                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">اكتب وصفاً للبوت الذي تريده، وسيقوم النظام بتوليد كود Node.js جاهز للتشغيل فوراً!</p>
+                <div class="card-header">
+                    <h3>إدارة بوتاتك المستضافة</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="switchPage('ai', document.querySelectorAll('.nav-item')[2])"><i class="fa-solid fa-wand-magic-sparkles"></i> إنشاء بوت عبر الـ AI</button>
+                        <button class="btn btn-success" onclick="openManualModal()"><i class="fa-solid fa-code"></i> إضافة بوت يدوي (إدخال كود)</button>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">هنا قائمة بجميع بوتاتك المضافة، يمكنك تعديلها أو متابعة حالتها.</p>
                 
-                <label>فكرة البوت أو الأوامر المطلوبة:</label>
-                <textarea id="aiPrompt" rows="4" placeholder="مثال: أريد بوت تكتات يفتح روم عند الضغط على زر، ويرسل رسالة ترحيبية في الروم العام..."></textarea>
-                
-                <button class="btn btn-primary" style="width: auto;" onclick="generateBotAI()"><i class="fa-solid fa-gears"></i> توليد كود البوت</button>
-                
-                <div style="margin-top: 20px;">
-                    <label>الكود الناتج:</label>
-                    <textarea id="aiResultCode" rows="8" readonly placeholder="سيظهر الكود البرمجي هنا بعد التوليد..."></textarea>
+                <div id="userBotsListContainer">
+                    <div class="bot-item">
+                        <div>
+                            <span class="bot-status status-online"></span>
+                            <strong>Welcome & Tickets Bot</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">نوع الاستضافة: افتراضي</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="this.parentElement.remove()">حذف البوت</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="admin" class="page-section">
+        <!-- 3. AI Generator Page -->
+        <div id="ai" class="page-section">
             <div class="card">
-                <h3>لوحة تحكم المشرف الأساسي (Super Admin)</h3>
-                <p style="color: var(--text-muted); margin-top: 10px;">صلاحيات كاملة للتحكم في استهلاك السيرفر، ومراقبة الـ Webhooks والبوتات المفعلة.</p>
+                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> منشئ بوتات Discord بالذكاء الاصطناعي</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">اكتب وصفاً للبوت، وسيولد الـ AI الكود ويقوم بإنشاء البوت تلقائياً في قائمتك!</p>
+                
+                <label>فكرة البوت أو الأوامر المطلوبة:</label>
+                <textarea id="aiPrompt" rows="4" placeholder="مثال: أريد بوت تكتات يفتح روم عند الضغط على زر..."></textarea>
+                
+                <button class="btn btn-primary" style="width: auto;" onclick="generateAndDeployAI()"><i class="fa-solid fa-gears"></i> توليد الكود وإنشاء البوت تلقائياً</button>
+                
+                <div style="margin-top: 20px;">
+                    <label>الكود الناتج من الـ AI:</label>
+                    <textarea id="aiResultCode" rows="6" readonly placeholder="سيظهر الكود البرمجي هنا بعد التوليد..."></textarea>
+                </div>
             </div>
         </div>
 
+        <!-- 4. Admin Page -->
+        <div id="admin" class="page-section">
+            <div class="card">
+                <h3>لوحة تحكم المشرف الأساسي (Super Admin)</h3>
+                <p style="color: var(--text-muted); margin-top: 10px;">صلاحيات كاملة للتحكم بالنظام والاستهلاك.</p>
+            </div>
+        </div>
+
+        <!-- 5. Settings Page -->
         <div id="settings" class="page-section">
             <div class="card">
                 <h3>إعدادات الحساب والنظام</h3>
-                <p style="color: var(--text-muted); margin-top: 10px;">ربط التوكنات، وإدارة مفاتيح الربط الخارجي.</p>
+                <p style="color: var(--text-muted); margin-top: 10px;">إدارة التوكنات والربط.</p>
             </div>
         </div>
 
@@ -457,6 +508,62 @@
                 'settings': 'الإعدادات العامة'
             };
             document.getElementById('pageTitle').innerText = titles[pageId] || 'لوحة التحكم';
+        }
+
+        // تحكم بنافذة الإضافة اليدوية
+        function openManualModal() {
+            document.getElementById('manualModal').style.display = 'flex';
+        }
+        function closeManualModal() {
+            document.getElementById('manualModal').style.display = 'none';
+        }
+
+        function saveManualBot() {
+            const name = document.getElementById('manualBotName').value;
+            const code = document.getElementById('manualBotCode').value;
+            if(!name || !code) {
+                alert('الرجاء كتابة اسم البوت والكود الخاص به!');
+                return;
+            }
+            addBotToList(name, 'إدخال يدوي (Custom Code)');
+            closeManualModal();
+            document.getElementById('manualBotName').value = '';
+            document.getElementById('manualBotCode').value = '';
+            alert('تم إنشاء وتشغيل البوت اليدوي بنجاح وإضافته إلى بوتاتك!');
+        }
+
+        function generateAndDeployAI() {
+            const prompt = document.getElementById('aiPrompt').value;
+            const resultBox = document.getElementById('aiResultCode');
+            if(!prompt) {
+                alert('الرجاء كتابة فكرة البوت أولاً!');
+                return;
+            }
+            const generatedCode = `// AI Generated Bot for: "${prompt}"\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds] });\nclient.on('ready', () => console.log('AI Bot Ready!'));\nclient.login('TOKEN');`;
+            resultBox.value = generatedCode;
+
+            // إنشاء البوت تلقائياً وإضافته للقائمة
+            const botName = "AI Bot: " + prompt.substring(0, 15) + "...";
+            addBotToList(botName, 'مولد عبر الـ AI');
+            alert('تم توليد الكود وإنشاء البوت بالذكاء الاصطناعي وإضافته إلى قائمة بوتاتك بنجاح!');
+        }
+
+        function addBotToList(name, type) {
+            const container = document.getElementById('userBotsListContainer');
+            const dashContainer = document.getElementById('dashboardBotList');
+            
+            const itemHTML = `
+                <div class="bot-item">
+                    <div>
+                        <span class="bot-status status-online"></span>
+                        <strong>${name}</strong>
+                        <div style="font-size: 11px; color: var(--text-muted);">نوع الاستضافة: ${type}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="this.parentElement.remove()">حذف البوت</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', itemHTML);
+            dashContainer.insertAdjacentHTML('beforeend', itemHTML);
         }
 
         function handleDiscordCallback() {
@@ -514,16 +621,6 @@
         function logout() {
             localStorage.removeItem('orvex_user_session');
             location.reload();
-        }
-
-        function generateBotAI() {
-            const prompt = document.getElementById('aiPrompt').value;
-            const resultBox = document.getElementById('aiResultCode');
-            if(!prompt) {
-                alert('الرجاء كتابة فكرة البوت أولاً!');
-                return;
-            }
-            resultBox.value = `// تم توليد كود البوت بنجاح عبر منشئ AI:\n\nconst { Client, GatewayIntentBits } = require('discord.js');\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on('ready', () => {\n  console.log(\`Bot logged in as \${client.user.tag}\`);\n});\n\nclient.login('YOUR_BOT_TOKEN');`;
         }
 
         handleDiscordCallback();
